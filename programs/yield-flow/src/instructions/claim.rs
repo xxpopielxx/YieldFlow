@@ -1,9 +1,40 @@
+// Plik obsługujący proces wypłat dywidend
+//
+// Główne funkcjonalności:
+// 1. Wypłata dywidend z mSOL w dwóch trybach:
+//    - Auto: automatyczna wypłata zgodna z harmonogramem
+//    - Manual: ręczna wypłata pomijająca ograniczenia
+//
+// 2. Logika walidacji:
+//    - Sprawdza czy wypłata jest możliwa
+//    - Weryfikuje warunki harmonogramu (dla trybu auto)
+//    - Sprawdza minimalne kwoty wypłat
+//
+// 3. Bezpieczeństwo:
+//    - Wymaga podpisu użytkownika
+//    - Weryfikuje zgodność kont
+//    - Chroni przed nadużyciami przez sprawdzanie warunków
+//
+// Struktury:
+// - ClaimDividend: Konta wymagane do wypłaty dywidendy
+// - ClaimMode: Enum określający tryb wypłaty (Auto/Manual)
+//
+// Proces wypłaty:
+// 1. Obliczenie aktualnej wartości dywidendy
+// 2. Walidacja zgodnie z trybem
+// 3. Wykonanie wypłaty przez integrację z Marinade
+// 4. Aktualizacja stanu użytkownika
+// 5. Aktualizacja harmonogramu (dla trybu auto)
+
+
 use anchor_lang::prelude::*;
+use anchor_spl::token::Token;
 use crate::{
     state::{UserStake, ProgramConfig},
     utils::{marinade, math, schedule::ScheduleCalculator},
     errors::ErrorCode
 };
+
 
 #[derive(Accounts)]
 pub struct ClaimDividend<'info> {
@@ -36,18 +67,19 @@ pub struct ClaimDividend<'info> {
     pub pandle_program: AccountInfo<'info>,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub enum ClaimMode {
-    Automatic, // Tylko jeśli wymagane przez harmonogram
-    Force,     // Wymuś wypłatę niezależnie od harmonogramu
+    Auto,    // Automatyczna wypłata zgodna z harmonogramem
+    Manual,  // Ręczna wypłata (pomija harmonogram)
 }
 
 pub fn handler(ctx: Context<ClaimDividend>, mode: ClaimMode) -> Result<()> {
     let user_stake = &mut ctx.accounts.user_stake;
     let clock = Clock::get()?;
-    
-    // 1. Oblicz aktualną wartość mSOL i dywidendę
-    let current_msol_value = marinade::get_current_msol_value(
+    let current_timestamp = clock.unix_timestamp;
+
+    // 1. Oblicz dywidendę
+    let current_msol_value = marinade::get_msol_rate(
         &ctx.accounts.marinade_program,
         &ctx.accounts.msol_mint
     )?;
@@ -57,22 +89,33 @@ pub fn handler(ctx: Context<ClaimDividend>, mode: ClaimMode) -> Result<()> {
         user_stake.base_sol_value,
         current_msol_value
     )?;
-    
-    // 2. Sprawdź czy wypłata jest wymagana/dozwolona
-    let should_payout = match mode {
-        ClaimMode::Automatic => {
-            ScheduleCalculator::should_payout(
-                user_stake,
-                dividend,
-                clock.unix_timestamp
-            )?
+
+    // 2. Walidacja wypłaty
+    match mode {
+        ClaimMode::Auto => {
+            require!(
+                user_stake.auto_claim_enabled,
+                ErrorCode::AutoClaimDisabled
+            );
+            require!(
+                current_timestamp >= user_stake.next_payout_date,
+                ErrorCode::PayoutNotDue
+            );
+            require!(
+                dividend >= user_stake.min_dividend_amount,
+                ErrorCode::DividendBelowMinimum
+            );
         }
-        ClaimMode::Force => true,
-    };
-    
-    require!(should_payout, ErrorCode::PayoutNotDue);
-    
-    // 3. Wykonaj wypłatę jeśli spełnione warunki
+        ClaimMode::Manual => {
+            // Wymuszona wypłata - pomija warunki harmonogramu
+            require!(
+                dividend > 0,
+                ErrorCode::NoDividendToClaim
+            );
+        }
+    }
+
+    // 3. Wypłata dywidendy
     if dividend > 0 {
         marinade::withdraw_dividend(
             user_stake,
@@ -83,25 +126,29 @@ pub fn handler(ctx: Context<ClaimDividend>, mode: ClaimMode) -> Result<()> {
             &ctx.accounts.pandle_program,
             &ctx.accounts.system_program,
         )?;
-        
-        // 4. Zaktualizuj stan użytkownika
+
+        // 4. Aktualizacja stanu
         user_stake.base_sol_value = current_msol_value;
-        user_stake.last_update = clock.unix_timestamp;
+        user_stake.last_update = current_timestamp;
         user_stake.last_dividend = dividend;
         user_stake.total_dividends = user_stake.total_dividends
             .checked_add(dividend)
             .ok_or(ErrorCode::MathOverflow)?;
-        
-        // 5. Aktualizuj następną datę wypłaty dla trybu automatycznego
-        if matches!(mode, ClaimMode::Automatic) {
+
+        // 5. Aktualizacja harmonogramu dla trybu auto
+        if let ClaimMode::Auto = mode {
             user_stake.next_payout_date = ScheduleCalculator::calculate_next_payout(
                 user_stake.payout_schedule,
-                clock.unix_timestamp
+                current_timestamp
             )?;
         }
-        
-        msg!("Dividend paid: {} SOL", dividend);
+
+        msg!(
+            "Dividend paid: {} SOL (mode: {:?})", 
+            dividend, 
+            mode
+        );
     }
-    
+
     Ok(())
 }

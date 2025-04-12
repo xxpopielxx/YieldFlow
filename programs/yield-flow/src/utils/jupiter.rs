@@ -1,3 +1,45 @@
+// Moduł integracji z Jupiter DEX Aggregator
+//
+// Główne funkcjonalności:
+// 1. swap_sol_to_usdc() - wykonuje wymianę SOL na USDC poprzez Jupiter DEX Aggregator
+//    - Parametry:
+//      * ctx: &Context<Swap> - kontekst z wymaganymi kontami
+//      * sol_amount: u64 - ilość SOL w lamports do wymiany
+//    - Proces:
+//      1. Pobiera aktualny kurs SOL/USDC (np. z Oracla Pyth)
+//      2. Oblicza minimalną oczekiwaną ilość USDC (z uwzględnieniem poślizgu 0.5%)
+//      3. Przygotowuje dane transakcji
+//      4. Wykonuje CPI (Cross-Program Invocation) do programu Jupiter
+//      5. Zwraca otrzymaną ilość USDC
+//
+// 2. Struktura Swap<'info> - definicja wymaganych kont:
+//    - user: Signer<'info> - portfel użytkownika
+//    - wsol_account: TokenAccount - konto WSOL użytkownika
+//    - usdc_account: TokenAccount - konto USDC użytkownika
+//    - wsol_mint: Mint - mint WSOL (tokenized SOL)
+//    - usdc_mint: Mint - mint USDC
+//    - jupiter_program: Program - program Jupiter DEX Aggregator
+//    - token_program: Program - program tokenowy SPL
+//    - associated_token_program: Program - program kont powiązanych
+//
+// Stałe:
+// - JUPITER_PROGRAM_ID: stały adres programu Jupitera
+// - SLIPPAGE_BPS: 50 (0.5% dopuszczalnego poślizgu)
+//
+// Funkcje pomocnicze:
+// - get_sol_usdc_rate() - symulacja pobrania kursu (w rzeczywistości integracja z Oracle)
+// - calculate_min_out() - oblicza minimalną oczekiwaną ilość USDC z uwzględnieniem poślizgu
+//
+// Obsługa błędów:
+// - SlippageExceeded - przekroczono dopuszczalny poślizg
+// - Overflow - błąd obliczeń matematycznych
+// - InsufficientLiquidity - brak płynności na rynku
+//
+// Uwagi:
+// - Moduł wykorzystuje CPI do interakcji z programem Jupiter
+// - Wymaga kont WSOL i USDC utworzonych jako Associated Token Accounts
+// - W rzeczywistej implementacji należy dodać prawdziwą integrację z Oracle
+
 use anchor_lang::{
     prelude::*,
     solana_program::{program::invoke, system_instruction}

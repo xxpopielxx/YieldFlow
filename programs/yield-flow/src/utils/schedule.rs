@@ -1,6 +1,46 @@
+// Implementacja logiki harmonogramów wypłat dla programu stakingowego
+//
+// Główne funkcjonalności:
+//
+// 1. calculate_next_payout() - oblicza następną datę wypłaty
+//    Parametry:
+//    - schedule: PayoutSchedule - wybrany harmonogram
+//    - current_timestamp: i64 - aktualny czas UNIX
+//    
+//    Obsługiwane harmonogramy:
+//    - Disabled: zwraca 0 (brak wypłat)
+//    - Daily: dodaje 86400 sekund (24h)
+//    - Weekly: oblicza dzień tygodnia i dolicza odpowiednią liczbę dni
+//    - Monthly: uproszczona implementacja (30 dni) + wybrany dzień miesiąca
+//    - Custom: dodaje podany interwał w sekundach
+//
+// 2. should_payout() - decyduje czy wypłata powinna być wykonana
+//    Warunki konieczne:
+//    - auto_claim_enabled == true
+//    - payout_schedule != Disabled
+//    - current_dividend >= min_dividend_amount
+//    - current_timestamp >= next_payout_date
+//
+// 3. validate_schedule() - waliduje poprawność ustawień harmonogramu
+//    Sprawdza:
+//    - Dni tygodnia (0-6 dla Weekly)
+//    - Dni miesiąca (1-28 dla Monthly)
+//    - Dodatni interwał dla Custom
+//
+// Obsługa błędów:
+// - InvalidWeekday - niepoprawny dzień tygodnia
+// - InvalidMonthDay - niepoprawny dzień miesiąca  
+// - InvalidCustomInterval - niepoprawny interwał
+//
+// Uwagi:
+// - Implementacja Monthly jest uproszczona (stałe 30 dni)
+// - Obliczenia oparte na timestampach UNIX (sekundy od 1970)
+// - Wszystkie funkcje są metodami statycznymi struktury ScheduleCalculator
+
+
 use anchor_lang::prelude::*;
 use crate::state::{UserStake, PayoutSchedule};
-
+use crate::errors::ErrorCode;
 pub struct ScheduleCalculator;
 
 impl ScheduleCalculator {
@@ -64,13 +104,13 @@ impl ScheduleCalculator {
     ) -> Result<()> {
         match schedule {
             PayoutSchedule::Weekly(day) if *day > 6 => {
-                return Err(ErrorCode::InvalidScheduleConfig.into());
+                Err(ErrorCode::InvalidWeekday.into())
             },
             PayoutSchedule::Monthly(day) if *day < 1 || *day > 28 => {
-                return Err(ErrorCode::InvalidScheduleConfig.into());
+                Err(ErrorCode::InvalidMonthDay.into())
             },
             PayoutSchedule::Custom(secs) if *secs <= 0 => {
-                return Err(ErrorCode::InvalidScheduleConfig.into());
+                Err(ErrorCode::InvalidCustomInterval.into())
             },
             _ => Ok(())
         }

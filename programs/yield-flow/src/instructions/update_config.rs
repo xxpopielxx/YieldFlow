@@ -1,3 +1,29 @@
+// Ten plik zawiera funkcjonalności związane z aktualizacją konfiguracji programu Pandle.
+//
+// Główne komponenty:
+// 1. `update_pandle_program_handler` - Umożliwia administratorowi aktualizację adresu programu Pandle
+//    - Wymagania:
+//      - Podpis administratora
+//      - Modyfikowalny dostęp do konfiguracji programu
+//      - Informacje o nowym koncie programu Pandle
+//    - Efekty:
+//      - Aktualizuje pole `pandle_program` w ProgramConfig
+//      - Loguje nowy adres programu
+//
+// 2. `update_escrow_handler` - Umożliwia aktualizację konta escrow (depozytowego)
+//    - Uwaga: W rzeczywistości escrow jest PDA (Program Derived Address),
+//      więc ta funkcja może być niepotrzebna lub służyć tylko do aktualizacji referencji
+//    - Obecnie tylko loguje informację o aktualizacji
+//
+// Struktury kont:
+// - `UpdatePandleProgram` - Zawiera konta potrzebne do aktualizacji programu Pandle
+// - `UpdateEscrow` - Zawiera konta potrzebne do aktualizacji escrow
+//
+// Bezpieczeństwo:
+// - Wszystkie operacje wymagają weryfikacji podpisu administratora
+// - Konta są odpowiednio sprawdzane przez atrybuty Anchor (has_one, mut)
+
+
 use anchor_lang::prelude::*;
 use crate::{state::ProgramConfig, errors::ErrorCode};
 

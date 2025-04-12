@@ -1,23 +1,58 @@
-//! Moduły narzędziowe dla programu Marinade Dividend
-//!
-//! Zawiera pomocnicze funkcje matematyczne i integracyjne
+// Moduły narzędziowe dla programu Marinade Dividend
+//
+// Zawiera zestaw narzędzi pomocniczych do:
+// - Harmonogramów wypłat (schedule)
+// - Integracji z Marinade Finance (marinade) 
+// - Obliczeń matematycznych (math)
+//
+// Główne komponenty:
+//
+// 1. Podmoduły funkcjonalne:
+//    * schedule.rs - zarządzanie terminami wypłat
+//    * marinade.rs - integracja z Marinade Finance:
+//      - Pobieranie kursu mSOL/SOL
+//      - Operacje na stake'ach
+//    * math.rs - obliczenia finansowe:
+//      - Dywidendy
+//      - Odsetki składane
+//
+// 2. Stałe matematyczne:
+//    * LAMPORTS_PER_SOL - 1_000_000_000 lamportów = 1 SOL
+//    * BPS_PER_PERCENT - 100 punktów bazowych = 1%
+//    * MAX_BPS - 10_000 = 100% (maksymalna wartość)
+//
+// 3. Typy danych:
+//    * MsolRate - przechowuje kurs wymiany mSOL:
+//      - lamports_per_msol: wartość w lamportach SOL
+//      - last_updated: timestamp aktualizacji
+//
+// 4. Reeksportowane funkcje (dostępne bezpośrednio z utils):
+//    * get_msol_rate()
+//    * withdraw_stake_rewards() 
+//    * calculate_dividend()
+//    * calculate_compound_interest()
+//
+// Uwagi:
+// - Wszystkie operacje zawierają zabezpieczenia przed przepełnieniem
+// - Stałe zdefiniowane centralnie dla spójności
+// - Typy zoptymalizowane pod Anchor/Solana
 
+pub mod schedule;
 pub mod marinade;
 pub mod math;
 
 // Re-eksport najczęściej używanych funkcji
-pub use marinade::{
+use crate::utils::marinade::{
     get_msol_rate,
     withdraw_stake_rewards,
-    WithdrawRewards
+    WithdrawRewards,
 };
+
+
 
 pub use math::{
     calculate_dividend,
     calculate_compound_interest,
-    calculate_fee,
-    calculate_percentage,
-    apr_to_daily_rate
 };
 
 /// Wspólne stałe matematyczne

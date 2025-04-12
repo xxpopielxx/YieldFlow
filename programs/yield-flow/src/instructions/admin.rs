@@ -1,3 +1,28 @@
+// Plik zawierający instrukcje administracyjne programu
+//
+// Główne funkcjonalności:
+// 1. Inicjalizacja konfiguracji programu
+//    - Tworzy główne konto konfiguracyjne
+//    - Ustawia administratora programu
+//    - Zapamiętuje kluczowe adresy (program Marinade, mint mSOL)
+//
+// 2. Zarządzanie uprawnieniami admina
+//    - Pozwala na zmianę administratora programu
+//    - Wymaga podpisu obecnego admina
+//
+// Struktury:
+// - InitializeProgram: Konta wymagane do inicjalizacji
+// - UpdateAdmin: Konta wymagane do zmiany admina
+//
+// Funkcje handlerów:
+// - initialize_program_handler: Wykonuje inicjalizację
+// - update_admin_handler: Aktualizuje administratora
+//
+// Bezpieczeństwo:
+// - Wszystkie operacje wymagają podpisu admina
+// - Inicjalizacja może nastąpić tylko raz
+// - Zmiana admina wymaga podpisu obecnego admina
+
 use anchor_lang::prelude::*;
 use crate::{state::ProgramConfig, errors::ErrorCode};
 

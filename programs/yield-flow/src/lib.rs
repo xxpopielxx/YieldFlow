@@ -1,3 +1,31 @@
+// Główny moduł programu Marinade Dividend
+//
+// Struktura programu:
+// - errors.rs - definicje kodów błędów
+// - instructions.rs - logika głównych instrukcji
+// - state.rs - struktury danych programu
+// - utils.rs - narzędzia pomocnicze
+//
+// Główne funkcjonalności:
+//
+// 1. Inicjalizacja:
+//    - initialize_program() - inicjalizacja programu (tylko admin)
+//    - initialize_user_stake() - inicjalizacja stake'u użytkownika
+//      * Parametry: msol_amount - ilość tokenów mSOL do stake'u
+//
+// 2. Wypłaty dywidend:
+//    - claim_dividend_auto() - automatyczna wypłata zgodna z harmonogramem
+//    - claim_dividend_manual() - ręczna wypłata (pomija harmonogram)
+//
+// 3. Administracja:
+//    - update_admin() - aktualizacja konta administratora
+//
+// Bezpieczeństwo:
+// - Wszystkie operacje administracyjne wymagają uprawnień admina
+// - Automatyczne wypłaty weryfikują harmonogram i minimalne kwoty
+// - Ręczne wypłaty dostępne jako override dla specjalnych przypadkówS
+
+
 pub mod errors;
 pub mod instructions;
 pub mod state;
@@ -19,8 +47,14 @@ pub mod marinade_dividend {
         instructions::initialize::handler(ctx, msol_amount)
     }
 
-    pub fn claim_dividend(ctx: Context<ClaimDividend>) -> Result<()> {
-        instructions::claim::handler(ctx)
+    // Automatyczna wypłata (zgodna z harmonogramem)
+    pub fn claim_dividend_auto(ctx: Context<ClaimDividend>) -> Result<()> {
+        instructions::claim::handler(ctx, ClaimMode::Auto)
+    }
+
+    // Ręczna wypłata (pomija harmonogram)
+    pub fn claim_dividend_manual(ctx: Context<ClaimDividend>) -> Result<()> {
+        instructions::claim::handler(ctx, ClaimMode::Manual)
     }
 
     pub fn initialize_program(

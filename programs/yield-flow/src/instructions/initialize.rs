@@ -1,3 +1,22 @@
+// Plik implementujący inicjalizację stakingu użytkownika
+//
+// Główne funkcje:
+// - Tworzy nowe konto UserStake dla użytkownika
+// - Inicjalizuje podstawowe wartości stakingu
+// - Weryfikuje poprawność programu Marinade
+//
+// Struktury:
+// - InitializeUserStake: Konta wymagane do inicjalizacji
+//   * user_stake: Nowe konto stakingowe (PDA)
+//   * user: Podpisujący użytkownik
+//   * config: Globalna konfiguracja programu
+//   * marinade_program: Weryfikowany program Marinade
+//
+// Bezpieczeństwo:
+// - Wymaga podpisu użytkownika
+// - Weryfikuje zgodność programu Marinade
+// - Konto inicjalizowane jako PDA z seedem "user-stake"
+
 use anchor_lang::prelude::*;
 use crate::{state::{UserStake, ProgramConfig}, errors::ErrorCode};
 

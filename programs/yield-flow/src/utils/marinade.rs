@@ -1,3 +1,53 @@
+// Moduł integracji z Marinade Finance
+//
+// Główne funkcjonalności:
+// 1. get_msol_rate() - pobiera aktualny kurs wymiany mSOL/SOL
+//    - Parametry:
+//      * marinade_state: &mut Account<State> - konto stanu Marinade
+//    - Proces:
+//      1. Wymusza aktualizację stanu z blockchaina
+//      2. Oblicza kurs używając funkcji Marinade calc_msol_from_sol()
+//    - Zwraca: kurs w lamportach (1 mSOL = X lamportów SOL)
+//
+// 2. withdraw_stake_rewards() - wypłaca nagrody stakingowe SOL z Marinade
+//    - Parametry:
+//      * ctx: &Context<WithdrawRewards> - kontekst z wymaganymi kontami
+//      * amount_lamports: u64 - ilość SOL do wypłaty w lamportach
+//    - Proces:
+//      1. Przygotowuje wszystkie wymagane konta Marinade
+//      2. Generuje PDA (Program Derived Address) do podpisywania transakcji
+//      3. Wywołuje CPI (Cross-Program Invocation) do programu Marinade
+//      4. Wykonuje instrukcję withdraw_stake_rewards
+//
+// Struktura WithdrawRewards<'info> - wymagane konta:
+// - state: Account<State> - główne konto stanu Marinade
+// - reserve_pda: AccountInfo - konto rezerwy Marinade (PDA)
+// - validator_list: AccountInfo - lista validatorów
+// - stake_list: AccountInfo - lista stake'ów
+// - msol_mint: Account<Mint> - mint tokenów mSOL
+// - treasury_msol_account: AccountInfo - portfel treasury Marinade
+// - destination: AccountInfo - docelowy portfel SOL
+// - stake_account: AccountInfo - stake account użytkownika
+// - destination_stake_account: AccountInfo - docelowy stake account
+// - manager_authority: Signer - autoryzacja managera (PDA)
+// - marinade_program: Program - program Marinade Finance
+// - Konta systemowe: Clock, Token, System, Rent
+//
+// Stałe:
+// - LAMPORTS_PER_SOL: 1_000_000_000 (1 SOL w lamportach)
+// - MARINADE_PROGRAM_ID: stały adres programu Marinade
+//
+// Obsługa błędów:
+// - NieprawidłowyStanMarinade - błędne konto stanu
+// - BłądObliczaniaKursu - problem z obliczeniem kursu mSOL
+// - NieautoryzowanyDostęp - brak autoryzacji managera
+//
+// Uwagi:
+// - Wymaga aktualnego stanu Marinade (reload())
+// - Używa CPI do interakcji z programem Marinade
+// - Wykorzystuje PDA do podpisywania transakcji
+// - Integruje się z systemem stakingowym Marinade
+
 use anchor_lang::{
     prelude::*,
     solana_program::{program::invoke, system_instruction}
@@ -53,12 +103,12 @@ pub mod marinade {
         };
 
         // Generowanie PDA (Program Derived Address) do podpisania transakcji
-        let (_, bump) = Pubkey::find_program_address(
-            &[b"treasury"],
+        let (pda, bump) = Pubkey::find_program_address(
+            &[b"treasury", &ctx.accounts.state.key().to_bytes()], // Add the state account's public key as part of the seed
             &MARINADE_PROGRAM_ID
         );
-        let seeds = &[b"treasury", &[bump]];
-        let signer = [&seeds[..]];
+        let seeds = &[b"treasury", &ctx.accounts.state.key().to_bytes(), &[bump]]; // Include the bump seed
+        let signer = &[&seeds[..]]; // Correctly construct the signer array
 
         // Wywołanie instrukcji w Marinade z podpisem PDA
         let cpi_ctx = CpiContext::new_with_signer(
