@@ -36,10 +36,11 @@
 // - Wszystkie operacje zawierają zabezpieczenia przed przepełnieniem
 // - Stałe zdefiniowane centralnie dla spójności
 // - Typy zoptymalizowane pod Anchor/Solana
-
+use anchor_lang::AnchorDeserialize;
 pub mod schedule;
 pub mod marinade;
 pub mod math;
+
 
 // Re-eksport najczęściej używanych funkcji
 use crate::utils::marinade::{

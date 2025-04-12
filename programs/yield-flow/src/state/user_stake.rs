@@ -32,6 +32,7 @@
 // - Implementuje Default dzięki ręcznej implementacji Default dla PayoutSchedule
 
 use anchor_lang::prelude::*;
+use anchor_lang::AnchorDeserialize;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, PartialEq)]
 pub enum PayoutSchedule {
@@ -50,7 +51,8 @@ impl Default for PayoutSchedule {
 }
 
 #[account]
-#[derive(Default)] // Teraz może być używany, bo PayoutSchedule implementuje Default
+#[derive(Default)] // Domyślna implementacja
+
 pub struct UserStake {
     pub user: Pubkey,
     pub msol_amount: u64,

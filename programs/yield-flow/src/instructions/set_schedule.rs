@@ -21,6 +21,7 @@
 
 use anchor_lang::prelude::*;
 use crate::{state::UserStake, utils::ScheduleCalculator};
+use anchor_lang::AnchorDeserialize;
 
 #[derive(Accounts)]
 pub struct SetSchedule<'info> {
