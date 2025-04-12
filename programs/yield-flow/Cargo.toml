@@ -21,7 +21,7 @@ idl-build = ["anchor-lang/idl-build"]
 anchor-lang = "0.29.0"
 anchor-spl = "0.29.0"
 solana-program = "1.16.1"
-marinade-finance = { git = "https://github.com/marinade-finance/liquid-staking-program", branch = "main" }
+marinade-finance = { git = "https://github.com/xxpopielxx/liquid-staking-program", branch = "main" }
 borsh = "0.10.3"
 
 
