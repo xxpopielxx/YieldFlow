@@ -1,4 +1,4 @@
-// Główny moduł programu Marinade Dividend
+// Główny moduł programu
 //
 // Struktura programu:
 // - errors.rs - definicje kodów błędów
