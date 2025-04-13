@@ -49,7 +49,7 @@ pub mod marinade {
         amount_lamports: u64,
     ) -> Result<()> {
         require!(amount_lamports > 0, ErrorCode::InvalidAmount);
-    // coś sie wywala przy depozycie chyba odnośnie bibioteki marinade
+    // coś sie wywala przy depozycie chyba odnośnie bibioteki marinade(error: No such field)
         let cpi_accounts = marinade_ix::Deposit {
             state: ctx.accounts.state.to_account_info(),
             msol_mint: ctx.accounts.msol_mint.to_account_info(),
