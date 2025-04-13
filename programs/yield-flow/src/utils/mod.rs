@@ -1,4 +1,4 @@
-// Moduły narzędziowe dla programu Marinade Dividend
+// Moduły narzędziowe 
 //
 // Zawiera zestaw narzędzi pomocniczych do:
 // - Harmonogramów wypłat (schedule)
@@ -31,11 +31,7 @@
 //    * withdraw_stake_rewards() 
 //    * calculate_dividend()
 //    * calculate_compound_interest()
-//
-// Uwagi:
-// - Wszystkie operacje zawierają zabezpieczenia przed przepełnieniem
-// - Stałe zdefiniowane centralnie dla spójności
-// - Typy zoptymalizowane pod Anchor/Solana
+
 use anchor_lang::AnchorDeserialize;
 pub mod schedule;
 pub mod marinade;

@@ -1,4 +1,4 @@
-// Moduł obliczeń finansowych dla programu stakingowego
+// Moduł obliczeń finansowych 
 //
 // Zawiera dwie główne funkcje:
 //
@@ -52,10 +52,7 @@
 use anchor_lang::prelude::*;
 use crate::errors::ErrorCode;
 
-/// Calculates the dividend amount in lamports (1 SOL = 1_000_000_000 lamports)
-/// @param msol_amount - Amount of mSOL tokens (1 mSOL = 1_000_000_000 lamports)
-/// @param base_sol_value - Initial value of 1 mSOL in SOL lamports
-/// @param current_sol_value - Current value of 1 mSOL in SOL lamports
+
 pub fn calculate_dividend(
     msol_amount: u64,
     base_sol_value: u64,
@@ -79,10 +76,7 @@ pub fn calculate_dividend(
         .ok_or(ErrorCode::MathOverflow.into())
 }
 
-/// Calculates compound interest using optimized formula
-/// @param principal - Initial amount in lamports
-/// @param rate_per_period - Rate per period in basis points (1% = 100)
-/// @param periods - Number of compounding periods
+
 pub fn calculate_compound_interest(
     principal: u64,
     rate_per_period: u64,

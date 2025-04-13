@@ -1,11 +1,10 @@
-// Struktura konfiguracji programu Pandle
 // Przechowuje wszystkie kluczowe adresy i ustawienia programu
 //
 // Pola:
 // - admin: Pubkey - adres administratora programu
-// - marinade_program: Pubkey - adres programu Marinade
-// - msol_mint: Pubkey - adres mint'a msol
-// - pandle_program: Pubkey - adres programu Pandle
+// - marinade_program: Pubkey - adres programu Marinade Finance
+// - msol_mint: Pubkey - adres mint'a mSOL
+// - sanglass_program: Pubkey - adres programu Sanglass
 // - usdc_mint: Pubkey - adres mint'a USDC
 // - fee_account: Pubkey - konto na które trafiają opłaty
 // - bump: u8 - wartość bump dla PDA
@@ -22,7 +21,7 @@ pub struct ProgramConfig {
     pub admin: Pubkey,
     pub marinade_program: Pubkey,
     pub msol_mint: Pubkey,
-    pub pandle_program: Pubkey,
+    pub sanglass_program: Pubkey,  
     pub usdc_mint: Pubkey,
     pub fee_account: Pubkey,
     pub bump: u8,
@@ -31,5 +30,5 @@ pub struct ProgramConfig {
 }
 
 impl ProgramConfig {
-    pub const LEN: usize = 32 * 5 + 1 + 1 + 2;
+    pub const LEN: usize = 32 * 5 + 1 + 1 + 2;  
 }

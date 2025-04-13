@@ -1,5 +1,4 @@
-// Moduł state - główny moduł przechowujący struktury danych programu
-//
+
 // Zawiera:
 // - config - moduł z konfiguracją programu (ProgramConfig)
 // - user_stake - moduł ze strukturami związanymi ze stakingiem użytkowników

@@ -1,4 +1,4 @@
-// Struktury danych związane ze stakingiem użytkowników
+// Struktury danych 
 // 
 // Główne komponenty:
 // 1. PayoutSchedule - enum określający harmonogram wypłat
@@ -23,13 +23,8 @@
 //      * next_payout_date: i64 - data następnej wypłaty
 //      * min_dividend_amount: u64 - minimalna kwota do wypłaty
 //      * auto_claim_enabled: bool - czy auto-wypłata jest włączona
-//
-//    - Metody:
-//      * const LEN - określa rozmiar struktury (32 + 8*5 + 1 + 1 + 8*2 + 1 bajtów)
-//
-// Uwagi:
-// - Struktura jest accountem Anchor (atrybut #[account])
-// - Implementuje Default dzięki ręcznej implementacji Default dla PayoutSchedule
+
+
 
 use anchor_lang::prelude::*;
 use anchor_lang::AnchorDeserialize;

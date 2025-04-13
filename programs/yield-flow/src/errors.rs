@@ -22,6 +22,9 @@ pub enum ErrorCode {
     #[msg("Failed to calculate mSOL rate")]
     MsolRateCalculationError,
 
+    #[msg("Invalid sol amount")]
+    InvalidAmount,
+
     // Błędy wypłat dywidend
     #[msg("Dividend amount too small")]
     DividendTooSmall,

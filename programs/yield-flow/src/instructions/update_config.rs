@@ -1,63 +1,103 @@
-// Ten plik zawiera funkcjonalności związane z aktualizacją konfiguracji programu Pandle.
+// Moduł integracji z Sanglass - systemem wypłat na Solanie
 //
-// Główne komponenty:
-// 1. `update_pandle_program_handler` - Umożliwia administratorowi aktualizację adresu programu Pandle
-//    - Wymagania:
-//      - Podpis administratora
-//      - Modyfikowalny dostęp do konfiguracji programu
-//      - Informacje o nowym koncie programu Pandle
-//    - Efekty:
-//      - Aktualizuje pole `pandle_program` w ProgramConfig
-//      - Loguje nowy adres programu
-//
-// 2. `update_escrow_handler` - Umożliwia aktualizację konta escrow (depozytowego)
-//    - Uwaga: W rzeczywistości escrow jest PDA (Program Derived Address),
-//      więc ta funkcja może być niepotrzebna lub służyć tylko do aktualizacji referencji
-//    - Obecnie tylko loguje informację o aktualizacji
-//
-// Struktury kont:
-// - `UpdatePandleProgram` - Zawiera konta potrzebne do aktualizacji programu Pandle
-// - `UpdateEscrow` - Zawiera konta potrzebne do aktualizacji escrow
+// Główne funkcjonalności:
+// 1. `update_sanglass_program_handler` - Aktualizacja adresu programu Sanglass
+// 2. `process_withdrawal_handler` - Główna funkcja wypłat do Sanglass
 //
 // Bezpieczeństwo:
-// - Wszystkie operacje wymagają weryfikacji podpisu administratora
-// - Konta są odpowiednio sprawdzane przez atrybuty Anchor (has_one, mut)
-
+// - Wszystkie operacje wymagają autoryzacji administratora
+// - Ścisła weryfikacja kont przez Anchor
 
 use anchor_lang::prelude::*;
 use crate::{state::ProgramConfig, errors::ErrorCode};
 
+/// Konta wymagane do aktualizacji programu Sanglass
 #[derive(Accounts)]
-pub struct UpdatePandleProgram<'info> {
-    #[account(mut, has_one = admin)]
+pub struct UpdateSanglassProgram<'info> {
+    #[account(mut, has_one = admin @ ErrorCode::Unauthorized)]
     pub config: Account<'info, ProgramConfig>,
+    
+    /// Administrator systemu
     pub admin: Signer<'info>,
-    /// CHECK: Will be verified when used
-    pub new_pandle_program: AccountInfo<'info>,
+    
+    /// Nowy adres programu Sanglass
+    /// CHECK: Weryfikowany przy użyciu
+    pub new_sanglass_program: AccountInfo<'info>,
 }
 
+/// Konta wymagane do wypłaty środków
 #[derive(Accounts)]
-pub struct UpdateEscrow<'info> {
-    #[account(mut, has_one = admin)]
+pub struct ProcessWithdrawal<'info> {
+    #[account(mut, has_one = admin @ ErrorCode::Unauthorized)]
     pub config: Account<'info, ProgramConfig>,
+    
+    /// Administrator zatwierdzający wypłatę
     pub admin: Signer<'info>,
-    /// CHECK: Will be verified by seeds when used
-    pub new_escrow: AccountInfo<'info>,
+    
+    /// Konto docelowe w systemie Sanglass
+    /// CHECK: Weryfikowane przez Sanglass
+    #[account(mut)]
+    pub sanglass_destination: AccountInfo<'info>,
+    
+    /// Vault programu (PDA)
+    #[account(
+        mut,
+        seeds = [b"vault"],
+        bump,
+        constraint = vault.to_account_info().owner == program_id
+    )]
+    pub vault: AccountInfo<'info>,
+    
+    /// Program Sanglass
+    /// CHECK: Weryfikowany przez config.sanglass_program
+    pub sanglass_program: AccountInfo<'info>,
 }
 
-pub fn update_pandle_program_handler(
-    ctx: Context<UpdatePandleProgram>,
+/// Aktualizuje adres programu Sanglass
+pub fn update_sanglass_program_handler(
+    ctx: Context<UpdateSanglassProgram>,
 ) -> Result<()> {
-    ctx.accounts.config.pandle_program = ctx.accounts.new_pandle_program.key();
-    msg!("Pandle program updated to: {}", ctx.accounts.config.pandle_program);
+    ctx.accounts.config.sanglass_program = ctx.accounts.new_sanglass_program.key();
+    msg!("Sanglass program updated to: {}", ctx.accounts.config.sanglass_program);
     Ok(())
 }
 
-pub fn update_escrow_handler(
-    ctx: Context<UpdateEscrow>,
+/// Przetwarza wypłatę środków do Sanglass
+pub fn process_withdrawal_handler(
+    ctx: Context<ProcessWithdrawal>,
+    amount: u64,
 ) -> Result<()> {
-    // W rzeczywistości escrow jest PDA, więc ta funkcja może być niepotrzebna
-    // lub może aktualizować tylko referencję do escrow
-    msg!("Escrow account reference updated");
+    require!(amount > 0, ErrorCode::InvalidAmount);
+    
+    // CPI do Sanglass
+    let transfer_ix = spl_token::instruction::transfer(
+        &spl_token::id(),
+        &ctx.accounts.vault.key(),
+        &ctx.accounts.sanglass_destination.key(),
+        &ctx.accounts.admin.key(),
+        &[],
+        amount,
+    )?;
+    
+    anchor_lang::solana_program::program::invoke(
+        &transfer_ix,
+        &[
+            ctx.accounts.vault.to_account_info(),
+            ctx.accounts.sanglass_destination.to_account_info(),
+            ctx.accounts.admin.to_account_info(),
+        ],
+    )?;
+    
+    msg!("Withdrawal processed to Sanglass: {} lamports", amount);
     Ok(())
+}
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Unauthorized access")]
+    Unauthorized,
+    #[msg("Invalid amount")]
+    InvalidAmount,
+    #[msg("Sanglass program mismatch")]
+    SanglassProgramMismatch,
 }

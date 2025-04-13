@@ -1,4 +1,4 @@
-// Implementacja logiki harmonogramów wypłat dla programu stakingowego
+// Implementacja logiki harmonogramów wypłat
 //
 // Główne funkcjonalności:
 //
