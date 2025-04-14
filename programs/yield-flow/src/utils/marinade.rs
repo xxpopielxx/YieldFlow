@@ -1,4 +1,4 @@
-// Moduł integracji z Marinade Finance - protokołem liquid stakingu na Solanie
+// Moduł integracji z Marinade Finance 
 //
 // Główne funkcjonalności:
 // 1. Depozyt SOL -> mSOL (token stakingowy Marinade)
@@ -49,75 +49,71 @@ pub mod marinade {
         amount_lamports: u64,
     ) -> Result<()> {
         require!(amount_lamports > 0, ErrorCode::InvalidAmount);
-    // coś sie wywala przy depozycie chyba odnośnie bibioteki marinade(error: No such field)
-        let cpi_accounts = marinade_ix::Deposit {
+    
+        let cpi_accounts = marinade_finance::cpi::accounts::Deposit {
             state: ctx.accounts.state.to_account_info(),
             msol_mint: ctx.accounts.msol_mint.to_account_info(),
             liq_pool_sol_leg_pda: ctx.accounts.liq_pool_sol_leg.to_account_info(),
             liq_pool_msol_leg: ctx.accounts.liq_pool_msol_leg.to_account_info(),
             liq_pool_msol_leg_authority: ctx.accounts.liq_pool_authority.to_account_info(),
             reserve_pda: ctx.accounts.reserve_pda.to_account_info(),
-            transfer_from: ctx.accounts.user_sol.to_account_info(),
+            transfer_from: ctx.accounts.user.to_account_info(),  // Używamy konta użytkownika jako źródła SOL
             mint_to: ctx.accounts.user_msol.to_account_info(),
             system_program: ctx.accounts.system_program.to_account_info(),
             token_program: ctx.accounts.token_program.to_account_info(),
-            lamports: amount_lamports,
         };
-
+    
         let cpi_ctx = CpiContext::new(
             ctx.accounts.marinade_program.to_account_info(),
             cpi_accounts
         );
-
-        marinade_ix::deposit(cpi_ctx, amount_lamports)?;
-
+    
+        marinade_finance::cpi::deposit(cpi_ctx, amount_lamports)?;
+    
         Ok(())
     }
-
-    /// Konta wymagane do depozytu SOL
+    
     #[derive(Accounts)]
     pub struct DepositSol<'info> {
         /// Główne konto stanu Marinade
-        #[account(mut, address = State::id() @ ErrorCode::InvalidMarinadeState)]
-        pub state: Account<'info, State>,
-
-        /// Użytkownik inicjujący depozyt
         #[account(mut)]
-        pub user: Signer<'info>,
-
-        /// SOL użytkownika do zdeponowania
-        #[account(mut)]
-        pub user_sol: AccountInfo<'info>,
-
+        pub state: Account<'info, marinade_finance::State>,
+    
+        /// Użytkownik inicjujący depozyt (również źródło SOL)
+        #[account(mut, signer)]
+        pub user: AccountInfo<'info>,
+    
         /// Docelowe konto mSOL użytkownika
         #[account(mut)]
         pub user_msol: Account<'info, TokenAccount>,
-
+    
         /// Mint tokenów mSOL
         #[account(mut)]
         pub msol_mint: Account<'info, Mint>,
-
+    
         /// Liquidity pool SOL (PDA)
         #[account(mut)]
         pub liq_pool_sol_leg: AccountInfo<'info>,
-
+    
         /// Liquidity pool mSOL
         #[account(mut)]
         pub liq_pool_msol_leg: Account<'info, TokenAccount>,
-
+    
         /// Autoryzacja liquidity pool
         pub liq_pool_authority: AccountInfo<'info>,
-
+    
         /// Konto rezerwy Marinade
         #[account(mut)]
         pub reserve_pda: AccountInfo<'info>,
-
+    
         /// Program Marinade
-        #[account(address = MARINADE_PROGRAM_ID)]
+        #[account(address = marinade_finance::ID)]
         pub marinade_program: Program<'info, marinade_finance::program::MarinadeFinance>,
-
-        /// Konta systemowe
+    
+        /// Program systemowy
         pub system_program: Program<'info, System>,
+        
+        /// Program tokenów
         pub token_program: Program<'info, Token>,
     }
 
