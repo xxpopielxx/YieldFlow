@@ -41,12 +41,6 @@ pub enum ErrorCode {
     #[msg("Auto claim is disabled")]
     AutoClaimDisabled,
 
-    // Błędy Pandle
-    #[msg("Pandle API error")]
-    PandleApiError,
-
-    #[msg("Pandle swap failed")]
-    PandleSwapFailed,
     
     // Błędy kont
     #[msg("Invalid USDC mint")]

@@ -78,7 +78,7 @@ pub mod marinade {
     #[derive(Accounts)]
     pub struct DepositSol<'info> {
         /// Główne konto stanu Marinade
-        #[account(mut, address = State::id() @ ErrorCode::NieprawidłowyStanMarinade)]
+        #[account(mut, address = State::id() @ ErrorCode::InvalidMarinadeState)]
         pub state: Account<'info, State>,
 
         /// Użytkownik inicjujący depozyt
@@ -172,7 +172,7 @@ pub mod marinade {
 
     #[derive(Accounts)]
     pub struct WithdrawRewards<'info> {
-        #[account(mut, address = State::id() @ ErrorCode::NieprawidłowyStanMarinade)]
+        #[account(mut, address = State::id() @ ErrorCode::InvalidMarinadeState)]
         pub state: Account<'info, State>,
         
         #[account(mut, seeds = [b"reserve"], bump, seeds::program = MARINADE_PROGRAM_ID)]
