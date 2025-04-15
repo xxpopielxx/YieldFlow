@@ -63,8 +63,6 @@ pub struct ClaimDividend<'info> {
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
     
-    /// CHECK: Verified by Pandle program
-    pub pandle_program: AccountInfo<'info>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
@@ -123,7 +121,6 @@ pub fn handler(ctx: Context<ClaimDividend>, mode: ClaimMode) -> Result<()> {
             &ctx.accounts.escrow_account,
             &ctx.accounts.usdc_mint,
             &ctx.accounts.token_program,
-            &ctx.accounts.pandle_program,
             &ctx.accounts.system_program,
         )?;
 
