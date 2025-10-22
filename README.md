@@ -5,6 +5,4 @@
 A yield distribution system that converts Marinade Finance (mSOL) staking rewards into USDC dividends via Jupiter swaps, with scheduled payouts through Sandglass.
 
 ## 📊 Pitch Deck
-📎 **[Download Pitch Deck](YieldFlow-Pitch.pdf?raw=true)** - Click to download presentation
-
-*Note: GitHub may have issues previewing this PDF. Please download to view properly.*
+📎 **[View Pitch Deck on Google Drive](https://drive.google.com/file/d/192D780pNl2Wyn0t3ssfJztAcC6DURpeA/view?usp=sharing)**
